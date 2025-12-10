@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: FAQ Lui Elementor
+ * Plugin Name: FAQ PDA Elementor
  * Plugin URI: https://github.com/pereira-lui/faq-elementor
  * Description: Plugin de FAQ personalizado com widget para Elementor. Permite cadastrar perguntas frequentes com tags e exibir no editor visual.
  * Version: 1.0.2
