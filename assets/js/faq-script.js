@@ -41,6 +41,9 @@
             // Clear tag selection when searching
             $container.find('.faq-tag-btn').removeClass('active');
             
+            // Show/hide clear button
+            updateClearButtons($container);
+            
             if (searchTerm.length < 2) {
                 // If search is too short, show all items
                 $container.find('.faq-item').removeClass('hidden').show();
@@ -52,6 +55,37 @@
             performSearch($container, searchTerm, '');
             
         }, 300));
+
+        // Clear search button click
+        $(document).on('click', '.faq-search-clear', function(e) {
+            e.preventDefault();
+            var $container = $(this).closest('.faq-container');
+            var $input = $container.find('.faq-search-input');
+            
+            $input.val('');
+            $container.find('.faq-item').removeClass('hidden').show();
+            $container.find('.faq-no-results').hide();
+            updateClearButtons($container);
+            $input.focus();
+        });
+
+        // Clear all button click (search + tags)
+        $(document).on('click', '.faq-clear-all-btn', function(e) {
+            e.preventDefault();
+            var $container = $(this).closest('.faq-container');
+            
+            // Clear search
+            $container.find('.faq-search-input').val('');
+            
+            // Clear tag selection
+            $container.find('.faq-tag-btn').removeClass('active');
+            
+            // Show all items
+            $container.find('.faq-item').removeClass('hidden').show();
+            $container.find('.faq-no-results').hide();
+            
+            updateClearButtons($container);
+        });
 
         // Tag filter functionality with tracking
         $(document).on('click', '.faq-tag-btn', function(e) {
@@ -81,6 +115,8 @@
                 // Perform search by tag
                 performSearch($container, '', tag);
             }
+            
+            updateClearButtons($container);
         });
 
         // Keyboard accessibility
@@ -97,12 +133,36 @@
         // Clear search on Escape key
         $(document).on('keydown', '.faq-search-input', function(e) {
             if (e.key === 'Escape') {
-                $(this).val('');
                 var $container = $(this).closest('.faq-container');
+                $(this).val('');
+                $container.find('.faq-tag-btn').removeClass('active');
                 $container.find('.faq-item').removeClass('hidden').show();
                 $container.find('.faq-no-results').hide();
+                updateClearButtons($container);
             }
         });
+    }
+
+    /**
+     * Update visibility of clear buttons
+     */
+    function updateClearButtons($container) {
+        var searchTerm = $container.find('.faq-search-input').val().trim();
+        var hasActiveTag = $container.find('.faq-tag-btn.active').length > 0;
+        
+        // Show/hide search clear button
+        if (searchTerm.length > 0) {
+            $container.find('.faq-search-clear').show();
+        } else {
+            $container.find('.faq-search-clear').hide();
+        }
+        
+        // Show/hide clear all button
+        if (searchTerm.length > 0 || hasActiveTag) {
+            $container.find('.faq-clear-all-btn').show();
+        } else {
+            $container.find('.faq-clear-all-btn').hide();
+        }
     }
 
     /**

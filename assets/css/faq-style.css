@@ -84,6 +84,28 @@
     opacity: 0.6;
 }
 
+/* Search Clear Button */
+.faq-search-clear {
+    position: absolute;
+    right: 45px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.faq-search-clear:hover {
+    opacity: 1;
+}
+
 .faq-search-loading svg {
     animation: faq-spin 1s linear infinite;
 }
@@ -98,6 +120,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+    align-items: center;
 }
 
 .faq-tag-btn {
@@ -119,6 +142,32 @@
 
 .faq-tag-btn.active {
     transform: scale(1.05);
+}
+
+/* Clear All Button */
+.faq-clear-all-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 4px;
+    opacity: 0.7;
+}
+
+.faq-clear-all-btn:hover {
+    opacity: 1;
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* FAQ Items */
