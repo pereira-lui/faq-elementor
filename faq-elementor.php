@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: FAQ Elementor
+ * Plugin Name: FAQ Lui Elementor
  * Plugin URI: https://github.com/pereira-lui/faq-elementor
  * Description: Plugin de FAQ personalizado com widget para Elementor. Permite cadastrar perguntas frequentes com tags e exibir no editor visual.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Lui
  * Author URI: https://github.com/pereira-lui
  * Text Domain: faq-elementor
@@ -16,6 +16,7 @@
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * GitHub Plugin URI: https://github.com/pereira-lui/faq-elementor
  * GitHub Branch: main
+ * Update URI: https://github.com/pereira-lui/faq-elementor
  */
 
 if (!defined('ABSPATH')) {
@@ -23,7 +24,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('FAQ_ELEMENTOR_VERSION', '1.0.1');
+define('FAQ_ELEMENTOR_VERSION', '1.0.2');
 define('FAQ_ELEMENTOR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FAQ_ELEMENTOR_PLUGIN_URL', plugin_dir_url(__FILE__));
 
