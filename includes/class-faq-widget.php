@@ -15,17 +15,24 @@ if (!defined('ABSPATH')) {
 class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
 
     /**
+     * Constructor
+     */
+    public function __construct($data = [], $args = null) {
+        parent::__construct($data, $args);
+    }
+
+    /**
      * Get widget name
      */
     public function get_name() {
-        return 'faq_widget';
+        return 'faq_pda_widget';
     }
 
     /**
      * Get widget title
      */
     public function get_title() {
-        return __('FAQ - Perguntas Frequentes', 'faq-elementor');
+        return __('FAQ PDA', 'faq-elementor');
     }
 
     /**
@@ -39,7 +46,7 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
      * Get widget categories
      */
     public function get_categories() {
-        return ['general'];
+        return ['faq-pda', 'general'];
     }
 
     /**

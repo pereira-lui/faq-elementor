@@ -3,7 +3,7 @@
  * Plugin Name: FAQ PDA Elementor
  * Plugin URI: https://github.com/pereira-lui/faq-elementor
  * Description: Plugin de FAQ personalizado com widget para Elementor. Permite cadastrar perguntas frequentes com tags e exibir no editor visual.
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: Lui
  * Author URI: https://github.com/pereira-lui
  * Text Domain: faq-elementor
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('FAQ_ELEMENTOR_VERSION', '1.1.0');
+define('FAQ_ELEMENTOR_VERSION', '1.1.1');
 define('FAQ_ELEMENTOR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FAQ_ELEMENTOR_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -52,32 +52,58 @@ final class FAQ_Elementor {
      * Constructor
      */
     public function __construct() {
+        // Always register CPT and taxonomy
+        add_action('init', [$this, 'register_faq_post_type']);
+        add_action('init', [$this, 'register_faq_taxonomy']);
+        
+        // Admin menu icon
+        add_action('admin_head', [$this, 'admin_menu_icon']);
+        
+        // Initialize Elementor integration
         add_action('plugins_loaded', [$this, 'init']);
+        
+        // Check if Elementor is active
+        add_action('admin_notices', [$this, 'admin_notice_missing_elementor']);
+        
+        // Include GitHub updater early
+        $this->includes();
     }
 
     /**
-     * Initialize the plugin
+     * Admin notice if Elementor is not active
+     */
+    public function admin_notice_missing_elementor() {
+        if (!did_action('elementor/loaded')) {
+            echo '<div class="notice notice-warning is-dismissible"><p>';
+            echo '<strong>FAQ PDA Elementor</strong> requer o plugin <strong>Elementor</strong> para o widget funcionar. O sistema de perguntas frequentes está funcionando, mas o widget visual não estará disponível.';
+            echo '</p></div>';
+        }
+    }
+
+    /**
+     * Initialize Elementor integration
      */
     public function init() {
+        // Check if Elementor is loaded
+        if (!did_action('elementor/loaded')) {
+            return;
+        }
+
         // Load text domain
         load_plugin_textdomain('faq-elementor', false, dirname(plugin_basename(__FILE__)) . '/languages');
 
-        // Include required files
-        $this->includes();
-
-        // Register Custom Post Type
-        add_action('init', [$this, 'register_faq_post_type']);
-        add_action('init', [$this, 'register_faq_taxonomy']);
-
         // Register Elementor Widget
         add_action('elementor/widgets/register', [$this, 'register_widgets']);
+        
+        // Register custom widget category
+        add_action('elementor/elements/categories_registered', [$this, 'register_widget_category']);
 
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);
         add_action('elementor/editor/after_enqueue_scripts', [$this, 'enqueue_editor_assets']);
-
-        // Add admin menu icon
-        add_action('admin_head', [$this, 'admin_menu_icon']);
+        
+        // Enqueue scripts in Elementor preview
+        add_action('elementor/preview/enqueue_scripts', [$this, 'enqueue_frontend_assets']);
 
         // AJAX handlers for search and tag tracking
         add_action('wp_ajax_faq_search', [$this, 'ajax_faq_search']);
@@ -96,6 +122,19 @@ final class FAQ_Elementor {
         
         // Initialize GitHub Updater
         new FAQ_Elementor_GitHub_Updater(__FILE__);
+    }
+
+    /**
+     * Register custom widget category
+     */
+    public function register_widget_category($elements_manager) {
+        $elements_manager->add_category(
+            'faq-pda',
+            [
+                'title' => __('FAQ PDA', 'faq-elementor'),
+                'icon' => 'eicon-help-o',
+            ]
+        );
     }
 
     /**
