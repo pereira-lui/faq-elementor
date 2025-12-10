@@ -20,6 +20,7 @@ class FAQ_Elementor_GitHub_Updater {
     private $plugin_file;
     private $github_response;
     private $plugin_activated;
+    private $plugin_folder;
 
     /**
      * Constructor
@@ -28,10 +29,12 @@ class FAQ_Elementor_GitHub_Updater {
         $this->plugin_file = $plugin_file;
         $this->username = 'pereira-lui';
         $this->repo = 'faq-elementor';
-        $this->slug = plugin_basename($plugin_file);
+        $this->plugin_folder = 'faq-elementor';
+        $this->slug = $this->plugin_folder . '/' . basename($plugin_file);
 
         add_filter('pre_set_site_transient_update_plugins', [$this, 'check_update']);
         add_filter('plugins_api', [$this, 'plugin_info'], 20, 3);
+        add_filter('upgrader_source_selection', [$this, 'fix_source_folder'], 10, 4);
         add_filter('upgrader_post_install', [$this, 'after_install'], 10, 3);
         
         // Add settings link
@@ -42,6 +45,10 @@ class FAQ_Elementor_GitHub_Updater {
      * Get plugin data
      */
     private function get_plugin_data() {
+        if (!empty($this->plugin_data)) {
+            return;
+        }
+        
         if (!function_exists('get_plugin_data')) {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
@@ -56,13 +63,23 @@ class FAQ_Elementor_GitHub_Updater {
             return;
         }
 
+        // Check cache first
+        $cache_key = 'faq_elementor_github_response';
+        $cached = get_transient($cache_key);
+        
+        if ($cached !== false) {
+            $this->github_response = $cached;
+            return;
+        }
+
         $request_uri = sprintf('https://api.github.com/repos/%s/%s/releases/latest', $this->username, $this->repo);
         
         $response = wp_remote_get($request_uri, [
             'headers' => [
                 'Accept' => 'application/vnd.github.v3+json',
-                'User-Agent' => 'WordPress/' . get_bloginfo('version')
-            ]
+                'User-Agent' => 'WordPress/' . get_bloginfo('version') . '; ' . home_url()
+            ],
+            'timeout' => 10,
         ]);
 
         if (is_wp_error($response)) {
@@ -77,6 +94,9 @@ class FAQ_Elementor_GitHub_Updater {
 
         $response_body = wp_remote_retrieve_body($response);
         $this->github_response = json_decode($response_body);
+        
+        // Cache for 6 hours
+        set_transient($cache_key, $this->github_response, 6 * HOUR_IN_SECONDS);
     }
 
     /**
@@ -90,7 +110,7 @@ class FAQ_Elementor_GitHub_Updater {
         $this->get_plugin_data();
         $this->get_repository_info();
 
-        if (empty($this->github_response)) {
+        if (empty($this->github_response) || empty($this->github_response->tag_name)) {
             return $transient;
         }
 
@@ -100,10 +120,10 @@ class FAQ_Elementor_GitHub_Updater {
         if (version_compare($github_version, $current_version, '>')) {
             $package = $this->github_response->zipball_url;
 
-            // Check if there's a specific asset (zip file)
+            // Check if there's a specific asset (zip file named faq-elementor.zip)
             if (!empty($this->github_response->assets)) {
                 foreach ($this->github_response->assets as $asset) {
-                    if (strpos($asset->name, '.zip') !== false) {
+                    if ($asset->name === 'faq-elementor.zip') {
                         $package = $asset->browser_download_url;
                         break;
                     }
@@ -111,15 +131,16 @@ class FAQ_Elementor_GitHub_Updater {
             }
 
             $transient->response[$this->slug] = (object) [
-                'slug' => dirname($this->slug),
+                'slug' => $this->plugin_folder,
+                'plugin' => $this->slug,
                 'new_version' => $github_version,
-                'url' => $this->plugin_data['PluginURI'],
+                'url' => 'https://github.com/' . $this->username . '/' . $this->repo,
                 'package' => $package,
                 'icons' => [],
                 'banners' => [],
                 'banners_rtl' => [],
                 'tested' => '',
-                'requires_php' => $this->plugin_data['RequiresPHP'],
+                'requires_php' => '7.4',
                 'compatibility' => new stdClass(),
             ];
         }
@@ -135,7 +156,7 @@ class FAQ_Elementor_GitHub_Updater {
             return $result;
         }
 
-        if (dirname($this->slug) !== $args->slug) {
+        if (!isset($args->slug) || $args->slug !== $this->plugin_folder) {
             return $result;
         }
 
@@ -148,12 +169,12 @@ class FAQ_Elementor_GitHub_Updater {
 
         $plugin_info = new stdClass();
         $plugin_info->name = $this->plugin_data['Name'];
-        $plugin_info->slug = dirname($this->slug);
+        $plugin_info->slug = $this->plugin_folder;
         $plugin_info->version = ltrim($this->github_response->tag_name, 'v');
-        $plugin_info->author = $this->plugin_data['AuthorName'];
-        $plugin_info->homepage = $this->plugin_data['PluginURI'];
-        $plugin_info->requires = $this->plugin_data['RequiresWP'];
-        $plugin_info->requires_php = $this->plugin_data['RequiresPHP'];
+        $plugin_info->author = '<a href="https://github.com/' . $this->username . '">Lui</a>';
+        $plugin_info->homepage = 'https://github.com/' . $this->username . '/' . $this->repo;
+        $plugin_info->requires = '5.0';
+        $plugin_info->requires_php = '7.4';
         $plugin_info->downloaded = 0;
         $plugin_info->last_updated = $this->github_response->published_at;
         $plugin_info->sections = [
@@ -166,7 +187,7 @@ class FAQ_Elementor_GitHub_Updater {
         // Check for specific zip asset
         if (!empty($this->github_response->assets)) {
             foreach ($this->github_response->assets as $asset) {
-                if (strpos($asset->name, '.zip') !== false) {
+                if ($asset->name === 'faq-elementor.zip') {
                     $plugin_info->download_link = $asset->browser_download_url;
                     break;
                 }
@@ -181,14 +202,57 @@ class FAQ_Elementor_GitHub_Updater {
      */
     private function get_changelog() {
         if (empty($this->github_response->body)) {
-            return '<p>Veja as notas de atualização no GitHub.</p>';
+            return '<p>Veja as notas de atualização no <a href="https://github.com/' . $this->username . '/' . $this->repo . '/releases" target="_blank">GitHub</a>.</p>';
         }
 
-        return '<pre>' . esc_html($this->github_response->body) . '</pre>';
+        // Convert markdown to basic HTML
+        $changelog = esc_html($this->github_response->body);
+        $changelog = nl2br($changelog);
+        
+        return '<div style="white-space: pre-wrap;">' . $changelog . '</div>';
     }
 
     /**
-     * After install - rename folder to correct name
+     * Fix the source folder name after download
+     * This is the key function that renames the extracted folder
+     */
+    public function fix_source_folder($source, $remote_source, $upgrader, $hook_extra = null) {
+        global $wp_filesystem;
+
+        // Check if this is our plugin being updated
+        if (!isset($hook_extra['plugin'])) {
+            // Check by folder name pattern for GitHub downloads
+            $source_basename = basename(untrailingslashit($source));
+            if (strpos($source_basename, $this->username . '-' . $this->repo) === false && 
+                strpos($source_basename, $this->repo . '-') === false) {
+                return $source;
+            }
+        } elseif ($hook_extra['plugin'] !== $this->slug) {
+            return $source;
+        }
+
+        // The correct folder name
+        $correct_folder = trailingslashit($remote_source) . $this->plugin_folder;
+        
+        // If source is already correct, return it
+        if (trailingslashit($source) === trailingslashit($correct_folder)) {
+            return $source;
+        }
+        
+        if (basename(untrailingslashit($source)) === $this->plugin_folder) {
+            return $source;
+        }
+
+        // Move/rename the folder
+        if ($wp_filesystem->move($source, $correct_folder, true)) {
+            return trailingslashit($correct_folder);
+        }
+
+        return $source;
+    }
+
+    /**
+     * After install - reactivate plugin if it was active
      */
     public function after_install($response, $hook_extra, $result) {
         global $wp_filesystem;
@@ -198,16 +262,29 @@ class FAQ_Elementor_GitHub_Updater {
             return $result;
         }
 
-        // Check if plugin was active
-        $this->plugin_activated = is_plugin_active($this->slug);
+        // Clear the GitHub response cache
+        delete_transient('faq_elementor_github_response');
 
-        // Rename the folder
-        $plugin_folder = WP_PLUGIN_DIR . '/' . dirname($this->slug);
-        $wp_filesystem->move($result['destination'], $plugin_folder);
-        $result['destination'] = $plugin_folder;
+        // Check if plugin was active before update
+        $was_active = is_plugin_active($this->slug);
+
+        // If the destination folder name is wrong, fix it
+        $proper_destination = WP_PLUGIN_DIR . '/' . $this->plugin_folder;
+        
+        if (isset($result['destination']) && $result['destination'] !== $proper_destination && is_dir($result['destination'])) {
+            // Remove old folder if exists
+            if (is_dir($proper_destination)) {
+                $wp_filesystem->delete($proper_destination, true);
+            }
+            
+            // Move to correct location
+            $wp_filesystem->move($result['destination'], $proper_destination, true);
+            $result['destination'] = $proper_destination;
+            $result['destination_name'] = $this->plugin_folder;
+        }
 
         // Reactivate if it was active
-        if ($this->plugin_activated) {
+        if ($was_active) {
             activate_plugin($this->slug);
         }
 
@@ -221,5 +298,13 @@ class FAQ_Elementor_GitHub_Updater {
         $github_link = '<a href="https://github.com/' . $this->username . '/' . $this->repo . '" target="_blank">GitHub</a>';
         array_unshift($links, $github_link);
         return $links;
+    }
+    
+    /**
+     * Clear update cache (useful for testing)
+     */
+    public static function clear_cache() {
+        delete_transient('faq_elementor_github_response');
+        delete_site_transient('update_plugins');
     }
 }
