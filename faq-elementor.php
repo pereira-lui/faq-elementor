@@ -88,11 +88,19 @@ final class FAQ_Elementor {
      * Include required files
      */
     public function includes() {
-        require_once FAQ_ELEMENTOR_PLUGIN_DIR . 'includes/class-faq-widget.php';
         require_once FAQ_ELEMENTOR_PLUGIN_DIR . 'includes/class-github-updater.php';
         
         // Initialize GitHub Updater
         new FAQ_Elementor_GitHub_Updater(__FILE__);
+    }
+
+    /**
+     * Register Elementor Widgets
+     */
+    public function register_widgets($widgets_manager) {
+        // Only load widget class when Elementor is ready
+        require_once FAQ_ELEMENTOR_PLUGIN_DIR . 'includes/class-faq-widget.php';
+        $widgets_manager->register(new \FAQ_Elementor_Widget());
     }
 
     /**
@@ -181,13 +189,6 @@ final class FAQ_Elementor {
         ];
 
         register_taxonomy('faq_tag', 'faq_item', $args);
-    }
-
-    /**
-     * Register Elementor Widgets
-     */
-    public function register_widgets($widgets_manager) {
-        $widgets_manager->register(new \FAQ_Elementor_Widget());
     }
 
     /**
