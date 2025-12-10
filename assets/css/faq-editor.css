@@ -1,0 +1,16 @@
+/**
+ * FAQ Elementor - Estilos do Editor
+ */
+
+/* Preview no editor do Elementor */
+.elementor-editor-active .faq-container {
+    min-height: 300px;
+}
+
+.elementor-editor-active .faq-tag-btn {
+    pointer-events: none;
+}
+
+.elementor-editor-active .faq-question-wrapper {
+    pointer-events: none;
+}

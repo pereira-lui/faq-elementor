@@ -1,0 +1,246 @@
+/**
+ * FAQ Elementor - Estilos do Frontend
+ */
+
+/* Container Principal */
+.faq-container {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    min-height: 400px;
+}
+
+.faq-container.faq-two-columns {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.faq-container.faq-two-columns .faq-header {
+    flex: 0 0 40%;
+    max-width: 40%;
+}
+
+.faq-container.faq-two-columns .faq-items-wrapper {
+    flex: 0 0 55%;
+    max-width: 55%;
+    margin-left: auto;
+}
+
+.faq-container.faq-one-column .faq-header {
+    text-align: center;
+}
+
+.faq-container.faq-one-column .faq-tags-filter {
+    justify-content: center;
+}
+
+/* Header e Título */
+.faq-header {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.faq-title {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 0;
+    padding: 0;
+}
+
+/* Tags Filter */
+.faq-tags-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.faq-tag-btn {
+    padding: 8px 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.faq-tag-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.faq-tag-btn.active {
+    transform: scale(1.05);
+}
+
+/* FAQ Items */
+.faq-items-wrapper {
+    width: 100%;
+}
+
+.faq-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.faq-item {
+    border: 1px solid;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.faq-item.hidden {
+    display: none;
+}
+
+.faq-question-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.3s ease;
+}
+
+.faq-question-wrapper:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.faq-question {
+    font-size: 16px;
+    font-weight: 500;
+    flex: 1;
+    padding-right: 20px;
+}
+
+.faq-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.faq-icon svg {
+    display: block;
+}
+
+.faq-icon-vertical {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    transform-origin: center;
+}
+
+.faq-item.active .faq-icon-vertical {
+    opacity: 0;
+    transform: rotate(90deg);
+}
+
+.faq-item.active .faq-icon {
+    transform: rotate(180deg);
+}
+
+/* Answer */
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.4s ease;
+    padding: 0 24px;
+}
+
+.faq-item.active .faq-answer {
+    max-height: 500px;
+    padding: 0 24px 24px;
+}
+
+.faq-answer p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.faq-answer p + p {
+    margin-top: 12px;
+}
+
+/* No items message */
+.faq-no-items {
+    text-align: center;
+    font-size: 16px;
+    opacity: 0.7;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+    .faq-container.faq-two-columns {
+        flex-direction: column;
+    }
+
+    .faq-container.faq-two-columns .faq-header,
+    .faq-container.faq-two-columns .faq-items-wrapper {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .faq-title {
+        font-size: 36px;
+    }
+}
+
+@media (max-width: 767px) {
+    .faq-title {
+        font-size: 28px;
+    }
+
+    .faq-tag-btn {
+        padding: 6px 14px;
+        font-size: 11px;
+    }
+
+    .faq-question-wrapper {
+        padding: 16px 20px;
+    }
+
+    .faq-question {
+        font-size: 14px;
+    }
+
+    .faq-answer {
+        font-size: 14px;
+    }
+
+    .faq-item.active .faq-answer {
+        padding: 0 20px 20px;
+    }
+}
+
+/* Animation for filtering */
+.faq-item {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Focus states for accessibility */
+.faq-tag-btn:focus {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+.faq-question-wrapper:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+}

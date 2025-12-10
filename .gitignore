@@ -1,0 +1,39 @@
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Archives (except release zips)
+*.tar.gz
+
+# Local config
+.env
+.env.local
+wp-config.php
