@@ -3,7 +3,7 @@
  * Plugin Name: FAQ PDA Elementor
  * Plugin URI: https://github.com/pereira-lui/faq-elementor
  * Description: Plugin de FAQ personalizado com widget para Elementor. Permite cadastrar perguntas frequentes com tags e exibir no editor visual.
- * Version: 1.1.1
+ * Version: 1.1.2
  * Author: Lui
  * Author URI: https://github.com/pereira-lui
  * Text Domain: faq-elementor
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('FAQ_ELEMENTOR_VERSION', '1.1.1');
+define('FAQ_ELEMENTOR_VERSION', '1.1.2');
 define('FAQ_ELEMENTOR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FAQ_ELEMENTOR_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -410,8 +410,16 @@ final class FAQ_Elementor {
 
     /**
      * Get popular tags (for widget render)
+     * Only returns tags that have been clicked at least once
      */
     public static function get_popular_tags_list() {
+        $tag_stats = get_option('faq_tag_stats', []);
+        
+        // If no tags have been clicked yet, return empty array
+        if (empty($tag_stats)) {
+            return [];
+        }
+
         $all_tags = get_terms([
             'taxonomy' => 'faq_tag',
             'hide_empty' => true,
@@ -421,16 +429,16 @@ final class FAQ_Elementor {
             return [];
         }
 
-        $tag_stats = get_option('faq_tag_stats', []);
-
         $tags = [];
         foreach ($all_tags as $tag) {
-            $count = isset($tag_stats[$tag->slug]) ? $tag_stats[$tag->slug] : 0;
-            $tags[] = [
-                'name' => $tag->name,
-                'slug' => $tag->slug,
-                'count' => $count,
-            ];
+            // Only include tags that have been clicked at least once
+            if (isset($tag_stats[$tag->slug]) && $tag_stats[$tag->slug] > 0) {
+                $tags[] = [
+                    'name' => $tag->name,
+                    'slug' => $tag->slug,
+                    'count' => $tag_stats[$tag->slug],
+                ];
+            }
         }
 
         // Sort by count (most popular first)
