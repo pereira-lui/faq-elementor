@@ -46,7 +46,7 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
      * Get widget keywords
      */
     public function get_keywords() {
-        return ['faq', 'perguntas', 'frequentes', 'accordion', 'questions', 'answers'];
+        return ['faq', 'perguntas', 'frequentes', 'accordion', 'questions', 'answers', 'busca', 'search'];
     }
 
     /**
@@ -88,9 +88,9 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
         );
 
         $this->add_control(
-            'show_tags_filter',
+            'show_search',
             [
-                'label' => __('Mostrar Filtro de Tags', 'faq-elementor'),
+                'label' => __('Mostrar Campo de Busca', 'faq-elementor'),
                 'type' => \Elementor\Controls_Manager::SWITCHER,
                 'label_on' => __('Sim', 'faq-elementor'),
                 'label_off' => __('Não', 'faq-elementor'),
@@ -99,68 +99,56 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
             ]
         );
 
-        // Get FAQ Tags
-        $faq_tags = get_terms([
-            'taxonomy' => 'faq_tag',
-            'hide_empty' => false,
-        ]);
-
-        $tags_options = [];
-        if (!is_wp_error($faq_tags) && !empty($faq_tags)) {
-            foreach ($faq_tags as $tag) {
-                $tags_options[$tag->term_id] = $tag->name;
-            }
-        }
+        $this->add_control(
+            'search_placeholder',
+            [
+                'label' => __('Placeholder da Busca', 'faq-elementor'),
+                'type' => \Elementor\Controls_Manager::TEXT,
+                'default' => __('Digite sua pergunta...', 'faq-elementor'),
+                'condition' => [
+                    'show_search' => 'yes',
+                ],
+            ]
+        );
 
         $this->add_control(
-            'selected_tags',
+            'show_tags_filter',
             [
-                'label' => __('Filtrar por Tags', 'faq-elementor'),
-                'type' => \Elementor\Controls_Manager::SELECT2,
-                'multiple' => true,
-                'options' => $tags_options,
-                'description' => __('Deixe vazio para mostrar todas as perguntas.', 'faq-elementor'),
+                'label' => __('Mostrar Tags Populares', 'faq-elementor'),
+                'type' => \Elementor\Controls_Manager::SWITCHER,
+                'label_on' => __('Sim', 'faq-elementor'),
+                'label_off' => __('Não', 'faq-elementor'),
+                'return_value' => 'yes',
+                'default' => 'yes',
+                'description' => __('Tags são ordenadas automaticamente pelas mais buscadas.', 'faq-elementor'),
+            ]
+        );
+
+        $this->add_control(
+            'max_tags',
+            [
+                'label' => __('Máximo de Tags', 'faq-elementor'),
+                'type' => \Elementor\Controls_Manager::NUMBER,
+                'min' => 1,
+                'max' => 20,
+                'step' => 1,
+                'default' => 6,
+                'condition' => [
+                    'show_tags_filter' => 'yes',
+                ],
             ]
         );
 
         $this->add_control(
             'posts_per_page',
             [
-                'label' => __('Número de Perguntas', 'faq-elementor'),
+                'label' => __('Número Inicial de Perguntas', 'faq-elementor'),
                 'type' => \Elementor\Controls_Manager::NUMBER,
                 'min' => -1,
                 'max' => 100,
                 'step' => 1,
-                'default' => -1,
-                'description' => __('-1 para mostrar todas.', 'faq-elementor'),
-            ]
-        );
-
-        $this->add_control(
-            'orderby',
-            [
-                'label' => __('Ordenar por', 'faq-elementor'),
-                'type' => \Elementor\Controls_Manager::SELECT,
-                'default' => 'menu_order',
-                'options' => [
-                    'menu_order' => __('Ordem Personalizada', 'faq-elementor'),
-                    'date' => __('Data', 'faq-elementor'),
-                    'title' => __('Título', 'faq-elementor'),
-                    'rand' => __('Aleatório', 'faq-elementor'),
-                ],
-            ]
-        );
-
-        $this->add_control(
-            'order',
-            [
-                'label' => __('Ordem', 'faq-elementor'),
-                'type' => \Elementor\Controls_Manager::SELECT,
-                'default' => 'ASC',
-                'options' => [
-                    'ASC' => __('Crescente', 'faq-elementor'),
-                    'DESC' => __('Decrescente', 'faq-elementor'),
-                ],
+                'default' => 10,
+                'description' => __('-1 para mostrar todas. Na busca, mostra todos os resultados.', 'faq-elementor'),
             ]
         );
 
@@ -215,6 +203,76 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
                 ],
                 'selectors' => [
                     '{{WRAPPER}} .faq-container' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->end_controls_section();
+
+        // Style Section - Search
+        $this->start_controls_section(
+            'section_search_style',
+            [
+                'label' => __('Campo de Busca', 'faq-elementor'),
+                'tab' => \Elementor\Controls_Manager::TAB_STYLE,
+            ]
+        );
+
+        $this->add_control(
+            'search_bg_color',
+            [
+                'label' => __('Cor de Fundo', 'faq-elementor'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'default' => 'rgba(255,255,255,0.1)',
+                'selectors' => [
+                    '{{WRAPPER}} .faq-search-input' => 'background-color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'search_text_color',
+            [
+                'label' => __('Cor do Texto', 'faq-elementor'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'default' => '#ffffff',
+                'selectors' => [
+                    '{{WRAPPER}} .faq-search-input' => 'color: {{VALUE}};',
+                    '{{WRAPPER}} .faq-search-input::placeholder' => 'color: {{VALUE}}; opacity: 0.6;',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'search_border_color',
+            [
+                'label' => __('Cor da Borda', 'faq-elementor'),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'default' => 'rgba(255,255,255,0.3)',
+                'selectors' => [
+                    '{{WRAPPER}} .faq-search-input' => 'border-color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'search_border_radius',
+            [
+                'label' => __('Border Radius', 'faq-elementor'),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'size_units' => ['px'],
+                'range' => [
+                    'px' => [
+                        'min' => 0,
+                        'max' => 50,
+                    ],
+                ],
+                'default' => [
+                    'unit' => 'px',
+                    'size' => 8,
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .faq-search-input' => 'border-radius: {{SIZE}}{{UNIT}};',
                 ],
             ]
         );
@@ -427,54 +485,61 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
     protected function render() {
         $settings = $this->get_settings_for_display();
 
-        // Query arguments
+        // Query arguments for initial load
         $args = [
             'post_type' => 'faq_item',
             'posts_per_page' => $settings['posts_per_page'],
-            'order' => $settings['order'],
+            'post_status' => 'publish',
+            'orderby' => 'date',
+            'order' => 'DESC',
         ];
-
-        // Handle ordering
-        if ($settings['orderby'] === 'menu_order') {
-            $args['meta_key'] = '_faq_order';
-            $args['orderby'] = 'meta_value_num';
-        } else {
-            $args['orderby'] = $settings['orderby'];
-        }
-
-        // Filter by selected tags
-        if (!empty($settings['selected_tags'])) {
-            $args['tax_query'] = [
-                [
-                    'taxonomy' => 'faq_tag',
-                    'field' => 'term_id',
-                    'terms' => $settings['selected_tags'],
-                ],
-            ];
-        }
 
         $faq_query = new WP_Query($args);
 
-        // Get all tags for filter
-        $all_tags = get_terms([
-            'taxonomy' => 'faq_tag',
-            'hide_empty' => true,
-        ]);
+        // Get popular tags (sorted by usage)
+        $popular_tags = FAQ_Elementor::get_popular_tags_list();
+        $max_tags = isset($settings['max_tags']) ? intval($settings['max_tags']) : 6;
+        $popular_tags = array_slice($popular_tags, 0, $max_tags);
 
         $layout_class = $settings['layout_style'] === 'two-columns' ? 'faq-two-columns' : 'faq-one-column';
+        $widget_id = $this->get_id();
         ?>
 
-        <div class="faq-container <?php echo esc_attr($layout_class); ?>">
+        <div class="faq-container <?php echo esc_attr($layout_class); ?>" data-widget-id="<?php echo esc_attr($widget_id); ?>">
             <div class="faq-header">
                 <?php if (!empty($settings['title'])) : ?>
                     <h2 class="faq-title"><?php echo esc_html($settings['title']); ?></h2>
                 <?php endif; ?>
 
-                <?php if ($settings['show_tags_filter'] === 'yes' && !is_wp_error($all_tags) && !empty($all_tags)) : ?>
-                    <div class="faq-tags-filter">
-                        <?php foreach ($all_tags as $tag) : ?>
-                            <button type="button" class="faq-tag-btn" data-tag="<?php echo esc_attr($tag->slug); ?>">
-                                <?php echo esc_html(strtoupper($tag->name)); ?>
+                <?php if ($settings['show_search'] === 'yes') : ?>
+                    <div class="faq-search-wrapper">
+                        <input 
+                            type="text" 
+                            class="faq-search-input" 
+                            placeholder="<?php echo esc_attr($settings['search_placeholder']); ?>"
+                            autocomplete="off"
+                        >
+                        <span class="faq-search-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="M21 21l-4.35-4.35"></path>
+                            </svg>
+                        </span>
+                        <span class="faq-search-loading" style="display: none;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32">
+                                    <animate attributeName="stroke-dashoffset" dur="1s" values="32;0" repeatCount="indefinite"/>
+                                </circle>
+                            </svg>
+                        </span>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($settings['show_tags_filter'] === 'yes' && !empty($popular_tags)) : ?>
+                    <div class="faq-tags-filter" data-max-tags="<?php echo esc_attr($max_tags); ?>">
+                        <?php foreach ($popular_tags as $tag) : ?>
+                            <button type="button" class="faq-tag-btn" data-tag="<?php echo esc_attr($tag['slug']); ?>">
+                                <?php echo esc_html(strtoupper($tag['name'])); ?>
                             </button>
                         <?php endforeach; ?>
                     </div>
@@ -482,20 +547,18 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
             </div>
 
             <div class="faq-items-wrapper">
-                <?php if ($faq_query->have_posts()) : ?>
-                    <div class="faq-items">
+                <div class="faq-items">
+                    <?php if ($faq_query->have_posts()) : ?>
                         <?php while ($faq_query->have_posts()) : $faq_query->the_post(); 
                             $post_tags = get_the_terms(get_the_ID(), 'faq_tag');
-                            $tag_classes = '';
                             $tag_slugs = [];
                             if ($post_tags && !is_wp_error($post_tags)) {
                                 foreach ($post_tags as $tag) {
                                     $tag_slugs[] = $tag->slug;
                                 }
-                                $tag_classes = implode(' ', $tag_slugs);
                             }
                         ?>
-                            <div class="faq-item" data-tags="<?php echo esc_attr(implode(',', $tag_slugs)); ?>">
+                            <div class="faq-item" data-id="<?php echo esc_attr(get_the_ID()); ?>" data-tags="<?php echo esc_attr(implode(',', $tag_slugs)); ?>">
                                 <div class="faq-question-wrapper">
                                     <span class="faq-question"><?php the_title(); ?></span>
                                     <span class="faq-icon">
@@ -510,11 +573,13 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
                                 </div>
                             </div>
                         <?php endwhile; ?>
-                    </div>
-                <?php else : ?>
-                    <p class="faq-no-items"><?php _e('Nenhuma pergunta frequente encontrada.', 'faq-elementor'); ?></p>
-                <?php endif; ?>
-                <?php wp_reset_postdata(); ?>
+                    <?php endif; ?>
+                    <?php wp_reset_postdata(); ?>
+                </div>
+
+                <p class="faq-no-results" style="display: none;">
+                    <?php _e('Nenhuma pergunta encontrada para sua busca.', 'faq-elementor'); ?>
+                </p>
             </div>
         </div>
 
@@ -533,6 +598,22 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
             <div class="faq-header">
                 <# if (settings.title) { #>
                     <h2 class="faq-title">{{{ settings.title }}}</h2>
+                <# } #>
+
+                <# if (settings.show_search === 'yes') { #>
+                    <div class="faq-search-wrapper">
+                        <input 
+                            type="text" 
+                            class="faq-search-input" 
+                            placeholder="{{ settings.search_placeholder }}"
+                        >
+                        <span class="faq-search-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="M21 21l-4.35-4.35"></path>
+                            </svg>
+                        </span>
+                    </div>
                 <# } #>
 
                 <# if (settings.show_tags_filter === 'yes') { #>
@@ -589,20 +670,6 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
                         </div>
                         <div class="faq-answer" style="display: none;">
                             <p>Mais uma resposta de exemplo.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="faq-question-wrapper">
-                            <span class="faq-question">Exemplo de pergunta 4</span>
-                            <span class="faq-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="12" y1="5" x2="12" y2="19" class="faq-icon-vertical"></line>
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                </svg>
-                            </span>
-                        </div>
-                        <div class="faq-answer" style="display: none;">
-                            <p>Última resposta de exemplo.</p>
                         </div>
                     </div>
                 </div>

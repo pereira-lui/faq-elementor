@@ -3,7 +3,7 @@
  * Plugin Name: FAQ PDA Elementor
  * Plugin URI: https://github.com/pereira-lui/faq-elementor
  * Description: Plugin de FAQ personalizado com widget para Elementor. Permite cadastrar perguntas frequentes com tags e exibir no editor visual.
- * Version: 1.0.3
+ * Version: 1.1.0
  * Author: Lui
  * Author URI: https://github.com/pereira-lui
  * Text Domain: faq-elementor
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('FAQ_ELEMENTOR_VERSION', '1.0.3');
+define('FAQ_ELEMENTOR_VERSION', '1.1.0');
 define('FAQ_ELEMENTOR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FAQ_ELEMENTOR_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -79,9 +79,13 @@ final class FAQ_Elementor {
         // Add admin menu icon
         add_action('admin_head', [$this, 'admin_menu_icon']);
 
-        // Add meta boxes
-        add_action('add_meta_boxes', [$this, 'add_faq_meta_boxes']);
-        add_action('save_post', [$this, 'save_faq_meta']);
+        // AJAX handlers for search and tag tracking
+        add_action('wp_ajax_faq_search', [$this, 'ajax_faq_search']);
+        add_action('wp_ajax_nopriv_faq_search', [$this, 'ajax_faq_search']);
+        add_action('wp_ajax_faq_track_tag', [$this, 'ajax_track_tag']);
+        add_action('wp_ajax_nopriv_faq_track_tag', [$this, 'ajax_track_tag']);
+        add_action('wp_ajax_faq_get_popular_tags', [$this, 'ajax_get_popular_tags']);
+        add_action('wp_ajax_nopriv_faq_get_popular_tags', [$this, 'ajax_get_popular_tags']);
     }
 
     /**
@@ -209,6 +213,12 @@ final class FAQ_Elementor {
             FAQ_ELEMENTOR_VERSION,
             true
         );
+
+        // Pass AJAX URL and nonce to JavaScript
+        wp_localize_script('faq-elementor-script', 'faqElementor', [
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('faq_elementor_nonce'),
+        ]);
     }
 
     /**
@@ -235,55 +245,161 @@ final class FAQ_Elementor {
     }
 
     /**
-     * Add meta boxes for additional FAQ fields
+     * AJAX handler for FAQ search
      */
-    public function add_faq_meta_boxes() {
-        add_meta_box(
-            'faq_order',
-            __('Ordem de Exibição', 'faq-elementor'),
-            [$this, 'render_order_meta_box'],
-            'faq_item',
-            'side',
-            'high'
-        );
+    public function ajax_faq_search() {
+        check_ajax_referer('faq_elementor_nonce', 'nonce');
+
+        $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
+        $tag = isset($_POST['tag']) ? sanitize_text_field($_POST['tag']) : '';
+
+        $args = [
+            'post_type' => 'faq_item',
+            'posts_per_page' => -1,
+            'post_status' => 'publish',
+        ];
+
+        // Search query
+        if (!empty($search)) {
+            $args['s'] = $search;
+        }
+
+        // Filter by tag
+        if (!empty($tag)) {
+            $args['tax_query'] = [
+                [
+                    'taxonomy' => 'faq_tag',
+                    'field' => 'slug',
+                    'terms' => $tag,
+                ],
+            ];
+        }
+
+        $query = new WP_Query($args);
+        $results = [];
+
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                
+                $post_tags = get_the_terms(get_the_ID(), 'faq_tag');
+                $tag_slugs = [];
+                if ($post_tags && !is_wp_error($post_tags)) {
+                    foreach ($post_tags as $t) {
+                        $tag_slugs[] = $t->slug;
+                    }
+                }
+
+                $results[] = [
+                    'id' => get_the_ID(),
+                    'title' => get_the_title(),
+                    'content' => apply_filters('the_content', get_the_content()),
+                    'tags' => $tag_slugs,
+                ];
+            }
+        }
+        wp_reset_postdata();
+
+        wp_send_json_success($results);
     }
 
     /**
-     * Render order meta box
+     * AJAX handler for tracking tag clicks
      */
-    public function render_order_meta_box($post) {
-        wp_nonce_field('faq_order_nonce', 'faq_order_nonce_field');
-        $order = get_post_meta($post->ID, '_faq_order', true);
-        ?>
-        <label for="faq_order"><?php _e('Ordem:', 'faq-elementor'); ?></label>
-        <input type="number" id="faq_order" name="faq_order" value="<?php echo esc_attr($order ?: 0); ?>" min="0" style="width: 100%;">
-        <p class="description"><?php _e('Números menores aparecem primeiro.', 'faq-elementor'); ?></p>
-        <?php
+    public function ajax_track_tag() {
+        check_ajax_referer('faq_elementor_nonce', 'nonce');
+
+        $tag_slug = isset($_POST['tag']) ? sanitize_text_field($_POST['tag']) : '';
+
+        if (empty($tag_slug)) {
+            wp_send_json_error('Tag not provided');
+        }
+
+        // Get current tag stats
+        $tag_stats = get_option('faq_tag_stats', []);
+
+        // Increment count
+        if (isset($tag_stats[$tag_slug])) {
+            $tag_stats[$tag_slug]++;
+        } else {
+            $tag_stats[$tag_slug] = 1;
+        }
+
+        // Save stats
+        update_option('faq_tag_stats', $tag_stats);
+
+        wp_send_json_success(['count' => $tag_stats[$tag_slug]]);
     }
 
     /**
-     * Save FAQ meta
+     * AJAX handler for getting popular tags
      */
-    public function save_faq_meta($post_id) {
-        // Check nonce
-        if (!isset($_POST['faq_order_nonce_field']) || !wp_verify_nonce($_POST['faq_order_nonce_field'], 'faq_order_nonce')) {
-            return;
+    public function ajax_get_popular_tags() {
+        check_ajax_referer('faq_elementor_nonce', 'nonce');
+
+        // Get all FAQ tags
+        $all_tags = get_terms([
+            'taxonomy' => 'faq_tag',
+            'hide_empty' => true,
+        ]);
+
+        if (is_wp_error($all_tags)) {
+            wp_send_json_error('Error fetching tags');
         }
 
-        // Check autosave
-        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-            return;
+        // Get tag stats
+        $tag_stats = get_option('faq_tag_stats', []);
+
+        // Build tags array with counts
+        $tags = [];
+        foreach ($all_tags as $tag) {
+            $count = isset($tag_stats[$tag->slug]) ? $tag_stats[$tag->slug] : 0;
+            $tags[] = [
+                'name' => $tag->name,
+                'slug' => $tag->slug,
+                'count' => $count,
+            ];
         }
 
-        // Check permissions
-        if (!current_user_can('edit_post', $post_id)) {
-            return;
+        // Sort by count (most popular first)
+        usort($tags, function($a, $b) {
+            return $b['count'] - $a['count'];
+        });
+
+        wp_send_json_success($tags);
+    }
+
+    /**
+     * Get popular tags (for widget render)
+     */
+    public static function get_popular_tags_list() {
+        $all_tags = get_terms([
+            'taxonomy' => 'faq_tag',
+            'hide_empty' => true,
+        ]);
+
+        if (is_wp_error($all_tags) || empty($all_tags)) {
+            return [];
         }
 
-        // Save order
-        if (isset($_POST['faq_order'])) {
-            update_post_meta($post_id, '_faq_order', intval($_POST['faq_order']));
+        $tag_stats = get_option('faq_tag_stats', []);
+
+        $tags = [];
+        foreach ($all_tags as $tag) {
+            $count = isset($tag_stats[$tag->slug]) ? $tag_stats[$tag->slug] : 0;
+            $tags[] = [
+                'name' => $tag->name,
+                'slug' => $tag->slug,
+                'count' => $count,
+            ];
         }
+
+        // Sort by count (most popular first)
+        usort($tags, function($a, $b) {
+            return $b['count'] - $a['count'];
+        });
+
+        return $tags;
     }
 }
 
