@@ -188,7 +188,7 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
             [
                 'label' => __('Cor de Fundo', 'faq-elementor'),
                 'type' => \Elementor\Controls_Manager::COLOR,
-                'default' => '#1a1a2e',
+                'default' => 'transparent',
                 'selectors' => [
                     '{{WRAPPER}} .faq-container' => 'background-color: {{VALUE}};',
                 ],
@@ -202,10 +202,10 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
                 'type' => \Elementor\Controls_Manager::DIMENSIONS,
                 'size_units' => ['px', 'em', '%'],
                 'default' => [
-                    'top' => '60',
-                    'right' => '40',
-                    'bottom' => '60',
-                    'left' => '40',
+                    'top' => '0',
+                    'right' => '0',
+                    'bottom' => '0',
+                    'left' => '0',
                     'unit' => 'px',
                 ],
                 'selectors' => [
