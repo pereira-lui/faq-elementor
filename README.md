@@ -91,7 +91,7 @@ faq-elementor/
 
 ## Autor
 
-Desenvolvido por [Seu Nome]
+Desenvolvido por Lui
 
 ## Licença
 
