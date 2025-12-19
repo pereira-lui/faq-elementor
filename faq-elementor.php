@@ -3,7 +3,7 @@
  * Plugin Name: FAQ PDA Elementor
  * Plugin URI: https://github.com/pereira-lui/faq-elementor
  * Description: Plugin de FAQ personalizado com widget para Elementor. Permite cadastrar perguntas frequentes com tags e exibir no editor visual.
- * Version: 1.1.9
+ * Version: 1.2.0
  * Author: Lui
  * Author URI: https://github.com/pereira-lui
  * Text Domain: faq-elementor
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('FAQ_ELEMENTOR_VERSION', '1.1.9');
+define('FAQ_ELEMENTOR_VERSION', '1.2.0');
 define('FAQ_ELEMENTOR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FAQ_ELEMENTOR_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -68,9 +68,12 @@ final class FAQ_Elementor {
         // Hide Rank Math SEO from FAQ post type
         add_filter('rank_math/metabox/post/screen', [$this, 'hide_rank_math_for_faq']);
         add_action('add_meta_boxes', [$this, 'remove_rank_math_metabox'], 99);
+        add_filter('rank_math/frontend/disable', [$this, 'disable_rank_math_for_faq']);
+        add_filter('rank_math/admin/disable_post_type', [$this, 'disable_rank_math_post_type']);
         
         // Admin scripts for tag search
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_tag_search']);
+        add_action('admin_enqueue_scripts', [$this, 'hide_rank_math_css']);
         add_filter('rank_math/sitemap/exclude_post_type', [$this, 'exclude_faq_from_rank_math_sitemap'], 10, 2);
         
         // Include GitHub updater early
@@ -88,6 +91,52 @@ final class FAQ_Elementor {
         }
         
         return $screen;
+    }
+
+    /**
+     * Disable Rank Math for FAQ post type
+     */
+    public function disable_rank_math_for_faq($disable) {
+        if (get_post_type() === 'faq_item') {
+            return true;
+        }
+        return $disable;
+    }
+
+    /**
+     * Disable Rank Math admin for FAQ post type
+     */
+    public function disable_rank_math_post_type($post_types) {
+        $post_types[] = 'faq_item';
+        return $post_types;
+    }
+
+    /**
+     * Hide Rank Math elements via CSS
+     */
+    public function hide_rank_math_css($hook) {
+        global $post_type;
+        
+        if (($hook === 'post.php' || $hook === 'post-new.php') && $post_type === 'faq_item') {
+            wp_add_inline_style('wp-admin', '
+                #rank_math_metabox,
+                .rank-math-status,
+                .rank-math-score,
+                #rank-math-post-analysis,
+                .rank-math-tooltip,
+                .rank-math-notice-top,
+                #setting-error-rank_math,
+                .rank-math-link,
+                #wp-admin-bar-rank-math,
+                .misc-pub-section.rank-math-score,
+                .edit-post-meta-boxes-area .rank-math-editor-general,
+                #rank-math-editor-general,
+                .components-panel__body.rank-math-editor-general,
+                [class*="rank-math"] {
+                    display: none !important;
+                }
+            ');
+        }
     }
 
     /**
