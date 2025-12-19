@@ -22,6 +22,16 @@
     // Initialize FAQ functionality
     function initFAQ() {
         
+        // Store original FAQ items IDs for each container
+        $('.faq-container').each(function() {
+            var $container = $(this);
+            var originalIds = [];
+            $container.find('.faq-item').each(function() {
+                originalIds.push($(this).data('id').toString());
+            });
+            $container.data('original-ids', originalIds);
+        });
+        
         // Accordion toggle
         $(document).on('click', '.faq-question-wrapper', function(e) {
             e.preventDefault();
@@ -45,9 +55,8 @@
             updateClearButtons($container);
             
             if (searchTerm.length < 2) {
-                // If search is too short, show all items
-                $container.find('.faq-item').removeClass('hidden').show();
-                $container.find('.faq-no-results').hide();
+                // If search is too short, restore original items
+                restoreOriginalItems($container);
                 return;
             }
             
@@ -63,8 +72,7 @@
             var $input = $container.find('.faq-search-input');
             
             $input.val('');
-            $container.find('.faq-item').removeClass('hidden').show();
-            $container.find('.faq-no-results').hide();
+            restoreOriginalItems($container);
             updateClearButtons($container);
             $input.focus();
         });
@@ -80,9 +88,8 @@
             // Clear tag selection
             $container.find('.faq-tag-btn').removeClass('active');
             
-            // Show all items
-            $container.find('.faq-item').removeClass('hidden').show();
-            $container.find('.faq-no-results').hide();
+            // Restore original items
+            restoreOriginalItems($container);
             
             updateClearButtons($container);
         });
@@ -100,10 +107,9 @@
             
             // Toggle active state
             if ($btn.hasClass('active')) {
-                // Deselect - show all items
+                // Deselect - restore original items
                 $btn.removeClass('active');
-                $container.find('.faq-item').removeClass('hidden').show();
-                $container.find('.faq-no-results').hide();
+                restoreOriginalItems($container);
             } else {
                 // Select this tag
                 $container.find('.faq-tag-btn').removeClass('active');
@@ -136,11 +142,42 @@
                 var $container = $(this).closest('.faq-container');
                 $(this).val('');
                 $container.find('.faq-tag-btn').removeClass('active');
-                $container.find('.faq-item').removeClass('hidden').show();
-                $container.find('.faq-no-results').hide();
+                restoreOriginalItems($container);
                 updateClearButtons($container);
             }
         });
+    }
+
+    /**
+     * Restore original FAQ items (remove dynamically added ones)
+     */
+    function restoreOriginalItems($container) {
+        var originalIds = $container.data('original-ids') || [];
+        var $items = $container.find('.faq-items');
+        var $noResults = $container.find('.faq-no-results');
+        
+        // Remove highlight from all items
+        $items.find('.faq-question').each(function() {
+            var $question = $(this);
+            // Remove highlight spans and restore plain text
+            $question.html($question.text());
+        });
+        
+        // Show only original items, remove dynamically added ones
+        $items.find('.faq-item').each(function() {
+            var $item = $(this);
+            var itemId = $item.data('id').toString();
+            
+            if (originalIds.indexOf(itemId) !== -1) {
+                // Original item - show it
+                $item.removeClass('hidden active').show();
+            } else {
+                // Dynamically added item - remove it
+                $item.remove();
+            }
+        });
+        
+        $noResults.hide();
     }
 
     /**

@@ -92,7 +92,8 @@
     transform: translateY(-50%);
     background: none;
     border: none;
-    padding: 4px;
+    padding: 4px !important;
+    color: #fff !important;
     cursor: pointer;
     opacity: 0.6;
     transition: opacity 0.2s ease;
@@ -171,8 +172,8 @@
 
 /* Clear All Button */
 .faq-clear-all-btn {
-    padding: 8px 16px;
-    font-size: 12px;
+    padding: 8px 16px !important;
+    font-size: 12px !important;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -187,12 +188,13 @@
     gap: 6px;
     border-radius: 4px;
     opacity: 0.7;
+    color: #ffffff !important;
 }
 
 .faq-clear-all-btn:hover {
     opacity: 1;
     border-color: rgba(255, 255, 255, 0.6);
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* FAQ Items */
@@ -225,7 +227,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
+    padding: 15px 24px;
     cursor: pointer;
     user-select: none;
     transition: background-color 0.3s ease;
@@ -236,8 +238,8 @@
 }
 
 .faq-question {
-    font-size: 16px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 400;
     flex: 1;
     padding-right: 20px;
 }
@@ -288,6 +290,10 @@
 
 .faq-answer p + p {
     margin-top: 12px;
+}
+
+.faq-answer a{
+    color: #e87722 !important;
 }
 
 /* No results message */
