@@ -257,6 +257,9 @@
         var $items = $container.find('.faq-items');
         var $noResults = $container.find('.faq-no-results');
         
+        // Remove old highlights first
+        removeHighlights($container);
+        
         if (results.length === 0) {
             $items.find('.faq-item').addClass('hidden').hide();
             $noResults.show();
@@ -270,7 +273,7 @@
             return item.id.toString();
         });
         
-        // Hide all items first
+        // Hide all items first, then show matching ones
         $items.find('.faq-item').each(function() {
             var $item = $(this);
             var itemId = $item.data('id').toString();
@@ -279,7 +282,7 @@
                 $item.removeClass('hidden').show();
                 
                 // Highlight search term in question
-                if (searchTerm) {
+                if (searchTerm && searchTerm.length >= 2) {
                     highlightText($item.find('.faq-question'), searchTerm);
                 }
             } else {
@@ -338,10 +341,27 @@
      * Highlight search term in text
      */
     function highlightText($element, searchTerm) {
+        // First, remove any existing highlights and get clean text
         var text = $element.text();
+        
+        if (!searchTerm || searchTerm.length < 2) {
+            $element.html(text);
+            return;
+        }
+        
         var regex = new RegExp('(' + escapeRegExp(searchTerm) + ')', 'gi');
         var highlighted = text.replace(regex, '<span class="faq-highlight">$1</span>');
         $element.html(highlighted);
+    }
+    
+    /**
+     * Remove all highlights from container
+     */
+    function removeHighlights($container) {
+        $container.find('.faq-question').each(function() {
+            var $question = $(this);
+            $question.html($question.text());
+        });
     }
 
     /**
@@ -358,6 +378,9 @@
         var $items = $container.find('.faq-item');
         var $noResults = $container.find('.faq-no-results');
         var hasResults = false;
+        
+        // Remove old highlights first
+        removeHighlights($container);
         
         $items.each(function() {
             var $item = $(this);
@@ -391,7 +414,7 @@
                 $item.removeClass('hidden').show();
                 hasResults = true;
                 
-                if (searchTerm) {
+                if (searchTerm && searchTerm.length >= 2) {
                     highlightText($item.find('.faq-question'), searchTerm);
                 }
             } else {
