@@ -139,7 +139,7 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
                 'min' => 1,
                 'max' => 20,
                 'step' => 1,
-                'default' => 6,
+                'default' => 10,
                 'condition' => [
                     'show_tags_filter' => 'yes',
                 ],
@@ -505,7 +505,7 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
 
         // Get popular tags (sorted by usage)
         $popular_tags = FAQ_Elementor::get_popular_tags_list();
-        $max_tags = isset($settings['max_tags']) ? intval($settings['max_tags']) : 6;
+        $max_tags = isset($settings['max_tags']) ? intval($settings['max_tags']) : 10;
         $popular_tags = array_slice($popular_tags, 0, $max_tags);
 
         $layout_class = $settings['layout_style'] === 'two-columns' ? 'faq-two-columns' : 'faq-one-column';

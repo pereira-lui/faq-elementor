@@ -31,7 +31,7 @@
 }
 
 .faq-container.faq-one-column .faq-tags-filter {
-    justify-content: center;
+    justify-content: flex-start;
 }
 
 .faq-container.faq-one-column .faq-search-wrapper {
@@ -118,30 +118,55 @@
 /* Tags Filter */
 .faq-tags-filter {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-wrap: nowrap;
+    gap: 8px;
     align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.3) transparent;
+    -webkit-overflow-scrolling: touch;
+}
+
+.faq-tags-filter::-webkit-scrollbar {
+    height: 4px;
+}
+
+.faq-tags-filter::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.faq-tags-filter::-webkit-scrollbar-thumb {
+    background-color: rgba(255,255,255,0.3);
+    border-radius: 4px;
+}
+
+.faq-tags-filter::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255,255,255,0.5);
 }
 
 .faq-tag-btn {
-    padding: 8px 20px;
-    font-size: 12px;
+    padding: 5px 12px;
+    font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     border: none;
     cursor: pointer;
     transition: all 0.3s ease;
     outline: none;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .faq-tag-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .faq-tag-btn.active {
-    transform: scale(1.05);
+    transform: scale(1.02);
 }
 
 /* Clear All Button */
@@ -303,8 +328,12 @@
     }
 
     .faq-tag-btn {
-        padding: 6px 14px;
-        font-size: 11px;
+        padding: 4px 10px;
+        font-size: 9px;
+    }
+
+    .faq-tags-filter {
+        gap: 6px;
     }
 
     .faq-question-wrapper {
