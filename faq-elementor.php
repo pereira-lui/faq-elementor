@@ -3,7 +3,7 @@
  * Plugin Name: FAQ PDA Elementor
  * Plugin URI: https://github.com/pereira-lui/faq-elementor
  * Description: Plugin de FAQ personalizado com widget para Elementor. Permite cadastrar perguntas frequentes com tags e exibir no editor visual.
- * Version: 1.2.0
+ * Version: 1.2.1
  * Author: Lui
  * Author URI: https://github.com/pereira-lui
  * Text Domain: faq-elementor
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('FAQ_ELEMENTOR_VERSION', '1.2.0');
+define('FAQ_ELEMENTOR_VERSION', '1.2.1');
 define('FAQ_ELEMENTOR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FAQ_ELEMENTOR_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -166,56 +166,89 @@ final class FAQ_Elementor {
         
         // Only on FAQ post edit screen
         if (($hook === 'post.php' || $hook === 'post-new.php') && $post_type === 'faq_item') {
-            // Get all tags
-            $tags = get_terms([
-                'taxonomy' => 'faq_tag',
-                'hide_empty' => false,
-                'orderby' => 'name',
-                'order' => 'ASC',
-            ]);
-            
-            $tag_list = [];
-            if (!is_wp_error($tags) && !empty($tags)) {
-                foreach ($tags as $tag) {
-                    $tag_list[] = [
-                        'id' => $tag->term_id,
-                        'name' => $tag->name,
-                        'slug' => $tag->slug,
-                    ];
-                }
-            }
-            
-            // Inline script and styles
-            wp_add_inline_script('jquery', $this->get_admin_tag_search_script($tag_list));
-            wp_add_inline_style('wp-admin', $this->get_admin_tag_search_styles());
+            // Add footer script
+            add_action('admin_footer', [$this, 'render_tag_search_script']);
         }
     }
 
     /**
-     * Get admin tag search script
+     * Render tag search script in admin footer
      */
-    private function get_admin_tag_search_script($tags) {
-        $tags_json = json_encode($tags);
-        return "
+    public function render_tag_search_script() {
+        // Get all tags
+        $tags = get_terms([
+            'taxonomy' => 'faq_tag',
+            'hide_empty' => false,
+            'orderby' => 'name',
+            'order' => 'ASC',
+        ]);
+        
+        $tag_list = [];
+        if (!is_wp_error($tags) && !empty($tags)) {
+            foreach ($tags as $tag) {
+                $tag_list[] = [
+                    'id' => $tag->term_id,
+                    'name' => $tag->name,
+                    'slug' => $tag->slug,
+                ];
+            }
+        }
+        
+        $tags_json = json_encode($tag_list);
+        ?>
+        <style>
+        .faq-tag-search-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .faq-tag-search-results {
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .faq-tag-search-btn {
+            background: #2271b1;
+            color: #fff;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        .faq-tag-search-btn:hover {
+            background: #135e96;
+        }
+        #tagsdiv-faq_tag .tagcloud-link {
+            display: none !important;
+        }
+        </style>
+        <script>
         jQuery(document).ready(function($) {
-            var allTags = {$tags_json};
+            var allTags = <?php echo $tags_json; ?>;
             var tagBox = $('#tagsdiv-faq_tag .tagsdiv');
             
-            if (tagBox.length && allTags.length > 0) {
-                // Replace 'most used' link with search
-                var mostUsed = tagBox.find('.tagcloud-link');
-                mostUsed.text('Buscar todas as tags');
+            if (tagBox.length) {
+                // Create search button
+                var searchBtn = $('<a href="#" class="faq-search-tags-link">Buscar todas as tags (' + allTags.length + ')</a>');
                 
                 // Create search container
-                var searchContainer = $('<div class=\"faq-tag-search-container\" style=\"display:none;\"></div>');
-                var searchInput = $('<input type=\"text\" class=\"faq-tag-search-input\" placeholder=\"Digite para buscar tags...\" style=\"width:100%; margin-bottom:10px; padding:8px;\">');
-                var tagsList = $('<div class=\"faq-tag-search-results\"></div>');
+                var searchContainer = $('<div class="faq-tag-search-container" style="display:none;"></div>');
+                var searchInput = $('<input type="text" class="faq-tag-search-input" placeholder="Digite para buscar tags..." style="width:100%; margin-bottom:10px; padding:8px;">');
+                var tagsList = $('<div class="faq-tag-search-results"></div>');
                 
                 searchContainer.append(searchInput).append(tagsList);
-                tagBox.find('.ajaxtag').after(searchContainer);
+                
+                // Add after the tag input area
+                tagBox.find('.ajaxtag').after(searchBtn).after(searchContainer);
                 
                 // Toggle search on click
-                mostUsed.on('click', function(e) {
+                searchBtn.on('click', function(e) {
                     e.preventDefault();
                     searchContainer.slideToggle();
                     if (searchContainer.is(':visible')) {
@@ -227,17 +260,23 @@ final class FAQ_Elementor {
                 // Render tags function
                 function renderTags(filter) {
                     tagsList.empty();
+                    
+                    if (allTags.length === 0) {
+                        tagsList.append('<p style="color:#666; font-style:italic;">Nenhuma tag cadastrada ainda.</p>');
+                        return;
+                    }
+                    
                     var filtered = allTags.filter(function(tag) {
                         return tag.name.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
                     });
                     
                     if (filtered.length === 0) {
-                        tagsList.append('<p style=\"color:#666; font-style:italic;\">Nenhuma tag encontrada.</p>');
+                        tagsList.append('<p style="color:#666; font-style:italic;">Nenhuma tag encontrada para "' + filter + '".</p>');
                         return;
                     }
                     
                     filtered.forEach(function(tag) {
-                        var tagBtn = $('<button type=\"button\" class=\"faq-tag-search-btn\">' + tag.name + '</button>');
+                        var tagBtn = $('<button type="button" class="faq-tag-search-btn">' + tag.name + '</button>');
                         tagBtn.on('click', function() {
                             // Add tag to input
                             var input = tagBox.find('.newtag');
@@ -260,42 +299,8 @@ final class FAQ_Elementor {
                 });
             }
         });
-        ";
-    }
-
-    /**
-     * Get admin tag search styles
-     */
-    private function get_admin_tag_search_styles() {
-        return "
-        .faq-tag-search-container {
-            margin-top: 15px;
-            padding: 15px;
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .faq-tag-search-results {
-            max-height: 200px;
-            overflow-y: auto;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
-        .faq-tag-search-btn {
-            background: #0073aa;
-            color: #fff;
-            border: none;
-            padding: 5px 12px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: background 0.2s;
-        }
-        .faq-tag-search-btn:hover {
-            background: #005a87;
-        }
-        ";
+        </script>
+        <?php
     }
 
     /**
