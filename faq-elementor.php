@@ -3,7 +3,7 @@
  * Plugin Name: FAQ PDA Elementor
  * Plugin URI: https://github.com/pereira-lui/faq-elementor
  * Description: Plugin de FAQ personalizado com widget para Elementor. Permite cadastrar perguntas frequentes com tags e exibir no editor visual.
- * Version: 1.1.5
+ * Version: 1.1.6
  * Author: Lui
  * Author URI: https://github.com/pereira-lui
  * Text Domain: faq-elementor
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('FAQ_ELEMENTOR_VERSION', '1.1.5');
+define('FAQ_ELEMENTOR_VERSION', '1.1.6');
 define('FAQ_ELEMENTOR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FAQ_ELEMENTOR_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -65,8 +65,32 @@ final class FAQ_Elementor {
         // Check if Elementor is active
         add_action('admin_notices', [$this, 'admin_notice_missing_elementor']);
         
+        // Hide Rank Math SEO from FAQ post type
+        add_filter('rank_math/metabox/priority', [$this, 'hide_rank_math_metabox'], 10, 2);
+        add_filter('rank_math/sitemap/exclude_post_type', [$this, 'exclude_faq_from_rank_math_sitemap'], 10, 2);
+        
         // Include GitHub updater early
         $this->includes();
+    }
+
+    /**
+     * Hide Rank Math SEO metabox from FAQ post type
+     */
+    public function hide_rank_math_metabox($priority, $post_type) {
+        if ($post_type === 'faq_item') {
+            return false;
+        }
+        return $priority;
+    }
+
+    /**
+     * Exclude FAQ from Rank Math sitemap (optional)
+     */
+    public function exclude_faq_from_rank_math_sitemap($exclude, $post_type) {
+        if ($post_type === 'faq_item') {
+            return true;
+        }
+        return $exclude;
     }
 
     /**
