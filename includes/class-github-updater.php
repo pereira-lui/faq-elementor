@@ -72,6 +72,7 @@ class FAQ_Elementor_GitHub_Updater {
             return;
         }
 
+        // First try to get the latest release
         $request_uri = sprintf('https://api.github.com/repos/%s/%s/releases/latest', $this->username, $this->repo);
         
         $response = wp_remote_get($request_uri, [
@@ -82,21 +83,77 @@ class FAQ_Elementor_GitHub_Updater {
             'timeout' => 10,
         ]);
 
-        if (is_wp_error($response)) {
-            return;
-        }
-
-        $response_code = wp_remote_retrieve_response_code($response);
+        $use_tags = false;
         
-        if ($response_code !== 200) {
-            return;
+        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+            $use_tags = true;
+        } else {
+            $response_body = wp_remote_retrieve_body($response);
+            $release_data = json_decode($response_body);
+            
+            // Check if we need to use tags instead (if tag is newer than release)
+            $tags_response = $this->get_latest_tag();
+            if ($tags_response && !empty($tags_response->name)) {
+                $release_version = isset($release_data->tag_name) ? ltrim($release_data->tag_name, 'v') : '0.0.0';
+                $tag_version = ltrim($tags_response->name, 'v');
+                
+                if (version_compare($tag_version, $release_version, '>')) {
+                    $use_tags = true;
+                } else {
+                    $this->github_response = $release_data;
+                }
+            } else {
+                $this->github_response = $release_data;
+            }
+        }
+        
+        // If release not found or tag is newer, get latest tag
+        if ($use_tags) {
+            $tag_data = $this->get_latest_tag();
+            if ($tag_data) {
+                $this->github_response = (object) [
+                    'tag_name' => $tag_data->name,
+                    'zipball_url' => sprintf('https://api.github.com/repos/%s/%s/zipball/%s', $this->username, $this->repo, $tag_data->name),
+                    'published_at' => $tag_data->commit->committer->date ?? date('c'),
+                    'body' => '',
+                    'assets' => [],
+                ];
+            }
+        }
+        
+        if (!empty($this->github_response)) {
+            // Cache for 1 hour (reduced from 6)
+            set_transient($cache_key, $this->github_response, 1 * HOUR_IN_SECONDS);
+        }
+    }
+    
+    /**
+     * Get latest tag from GitHub
+     */
+    private function get_latest_tag() {
+        $request_uri = sprintf('https://api.github.com/repos/%s/%s/tags', $this->username, $this->repo);
+        
+        $response = wp_remote_get($request_uri, [
+            'headers' => [
+                'Accept' => 'application/vnd.github.v3+json',
+                'User-Agent' => 'WordPress/' . get_bloginfo('version') . '; ' . home_url()
+            ],
+            'timeout' => 10,
+        ]);
+
+        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+            return null;
         }
 
         $response_body = wp_remote_retrieve_body($response);
-        $this->github_response = json_decode($response_body);
+        $tags = json_decode($response_body);
         
-        // Cache for 6 hours
-        set_transient($cache_key, $this->github_response, 6 * HOUR_IN_SECONDS);
+        if (empty($tags) || !is_array($tags)) {
+            return null;
+        }
+        
+        // Tags are returned in order, first one is the latest
+        return $tags[0];
     }
 
     /**
