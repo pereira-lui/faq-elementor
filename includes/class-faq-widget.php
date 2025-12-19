@@ -154,7 +154,7 @@ class FAQ_Elementor_Widget extends \Elementor\Widget_Base {
                 'min' => -1,
                 'max' => 100,
                 'step' => 1,
-                'default' => 10,
+                'default' => 7,
                 'description' => __('-1 para mostrar todas. Na busca, mostra todos os resultados.', 'faq-elementor'),
             ]
         );

@@ -119,11 +119,11 @@
 .faq-tags-filter {
     display: flex;
     flex-wrap: nowrap;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
     overflow-x: auto;
     overflow-y: hidden;
-    padding-bottom: 8px;
+    padding-bottom: 6px;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.3) transparent;
     -webkit-overflow-scrolling: touch;
@@ -147,11 +147,11 @@
 }
 
 .faq-tag-btn {
-    padding: 5px 12px;
-    font-size: 10px;
+    padding: 4px 10px;
+    font-size: 9px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
     border: none;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -328,12 +328,12 @@
     }
 
     .faq-tag-btn {
-        padding: 4px 10px;
-        font-size: 9px;
+        padding: 3px 8px;
+        font-size: 8px;
     }
 
     .faq-tags-filter {
-        gap: 6px;
+        gap: 5px;
     }
 
     .faq-question-wrapper {
