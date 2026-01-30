@@ -49,24 +49,6 @@
 .faq-page-search-wrapper {
     position: relative !important;
     width: 100% !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-
-/* Alinhamento do campo de busca via classe do Elementor */
-.faq-search-align-left .faq-page-search-wrapper {
-    margin-left: 0 !important;
-    margin-right: auto !important;
-}
-
-.faq-search-align-center .faq-page-search-wrapper {
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-
-.faq-search-align-right .faq-page-search-wrapper {
-    margin-left: auto !important;
-    margin-right: 0 !important;
 }
 
 .faq-page-hero .faq-page-search-wrapper {
