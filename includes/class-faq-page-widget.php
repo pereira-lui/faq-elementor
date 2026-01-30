@@ -194,19 +194,27 @@ class FAQ_Elementor_Page_Widget extends \Elementor\Widget_Base {
             [
                 'label' => __('Largura do Conteúdo', 'faq-elementor'),
                 'type' => \Elementor\Controls_Manager::SLIDER,
-                'size_units' => ['%'],
+                'size_units' => ['px', '%', 'vw'],
                 'range' => [
+                    'px' => [
+                        'min' => 300,
+                        'max' => 1400,
+                    ],
                     '%' => [
+                        'min' => 30,
+                        'max' => 100,
+                    ],
+                    'vw' => [
                         'min' => 30,
                         'max' => 100,
                     ],
                 ],
                 'default' => [
-                    'unit' => '%',
-                    'size' => 100,
+                    'unit' => 'px',
+                    'size' => 900,
                 ],
                 'selectors' => [
-                    '{{WRAPPER}} .faq-page-hero-content' => 'max-width: {{SIZE}}{{UNIT}} !important; width: {{SIZE}}{{UNIT}} !important;',
+                    '{{WRAPPER}} .faq-page-hero-content' => 'max-width: {{SIZE}}{{UNIT}} !important; width: 100% !important;',
                 ],
                 'condition' => [
                     'show_hero' => 'yes',
