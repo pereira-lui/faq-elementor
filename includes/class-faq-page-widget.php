@@ -189,39 +189,6 @@ class FAQ_Elementor_Page_Widget extends \Elementor\Widget_Base {
             ]
         );
 
-        $this->add_responsive_control(
-            'hero_content_max_width',
-            [
-                'label' => __('Largura do Conteúdo', 'faq-elementor'),
-                'type' => \Elementor\Controls_Manager::SLIDER,
-                'size_units' => ['px', '%', 'vw'],
-                'range' => [
-                    'px' => [
-                        'min' => 300,
-                        'max' => 1400,
-                    ],
-                    '%' => [
-                        'min' => 30,
-                        'max' => 100,
-                    ],
-                    'vw' => [
-                        'min' => 30,
-                        'max' => 100,
-                    ],
-                ],
-                'default' => [
-                    'unit' => 'px',
-                    'size' => 900,
-                ],
-                'selectors' => [
-                    '{{WRAPPER}} .faq-page-hero-content' => 'max-width: {{SIZE}}{{UNIT}} !important; width: 100% !important;',
-                ],
-                'condition' => [
-                    'show_hero' => 'yes',
-                ],
-            ]
-        );
-
         $this->end_controls_section();
 
         // Search Section
