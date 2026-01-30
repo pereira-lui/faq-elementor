@@ -346,6 +346,10 @@ final class FAQ_Elementor {
         add_action('wp_ajax_nopriv_faq_track_tag', [$this, 'ajax_track_tag']);
         add_action('wp_ajax_faq_get_popular_tags', [$this, 'ajax_get_popular_tags']);
         add_action('wp_ajax_nopriv_faq_get_popular_tags', [$this, 'ajax_get_popular_tags']);
+        
+        // AJAX handler for page widget
+        add_action('wp_ajax_faq_page_search', [$this, 'ajax_faq_page_search']);
+        add_action('wp_ajax_nopriv_faq_page_search', [$this, 'ajax_faq_page_search']);
     }
 
     /**
@@ -375,9 +379,12 @@ final class FAQ_Elementor {
      * Register Elementor Widgets
      */
     public function register_widgets($widgets_manager) {
-        // Only load widget class when Elementor is ready
+        // Only load widget classes when Elementor is ready
         require_once FAQ_ELEMENTOR_PLUGIN_DIR . 'includes/class-faq-widget.php';
+        require_once FAQ_ELEMENTOR_PLUGIN_DIR . 'includes/class-faq-page-widget.php';
+        
         $widgets_manager->register(new \FAQ_Elementor_Widget());
+        $widgets_manager->register(new \FAQ_Elementor_Page_Widget());
     }
 
     /**
@@ -472,6 +479,7 @@ final class FAQ_Elementor {
      * Enqueue frontend assets
      */
     public function enqueue_frontend_assets() {
+        // Widget básico FAQ - sempre carrega (é leve)
         wp_enqueue_style(
             'faq-elementor-style',
             FAQ_ELEMENTOR_PLUGIN_URL . 'assets/css/faq-style.css',
@@ -492,6 +500,38 @@ final class FAQ_Elementor {
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('faq_elementor_nonce'),
         ]);
+
+        // Widget FAQ Page - registra mas só carrega quando necessário
+        // Swiper CSS e JS são carregados apenas quando o widget de página FAQ está na página
+        wp_register_style(
+            'swiper',
+            'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css',
+            [],
+            '11.0.0'
+        );
+
+        wp_register_style(
+            'faq-elementor-page-style',
+            FAQ_ELEMENTOR_PLUGIN_URL . 'assets/css/faq-page-style.css',
+            ['swiper'],
+            FAQ_ELEMENTOR_VERSION
+        );
+
+        wp_register_script(
+            'swiper',
+            'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js',
+            [],
+            '11.0.0',
+            true
+        );
+
+        wp_register_script(
+            'faq-elementor-page-script',
+            FAQ_ELEMENTOR_PLUGIN_URL . 'assets/js/faq-page-script.js',
+            ['jquery', 'swiper'],
+            FAQ_ELEMENTOR_VERSION,
+            true
+        );
     }
 
     /**
@@ -574,6 +614,78 @@ final class FAQ_Elementor {
         wp_reset_postdata();
 
         wp_send_json_success($results);
+    }
+
+    /**
+     * AJAX handler for FAQ Page Widget search with pagination
+     */
+    public function ajax_faq_page_search() {
+        check_ajax_referer('faq_elementor_nonce', 'nonce');
+
+        $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
+        $category = isset($_POST['category']) ? sanitize_text_field($_POST['category']) : 'all';
+        $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+        $posts_per_page = isset($_POST['posts_per_page']) ? intval($_POST['posts_per_page']) : 10;
+
+        $args = [
+            'post_type' => 'faq_item',
+            'posts_per_page' => $posts_per_page,
+            'post_status' => 'publish',
+            'paged' => $page,
+            'orderby' => 'date',
+            'order' => 'DESC',
+        ];
+
+        // Search query
+        if (!empty($search)) {
+            $args['s'] = $search;
+        }
+
+        // Filter by category (tag)
+        if (!empty($category) && $category !== 'all') {
+            $args['tax_query'] = [
+                [
+                    'taxonomy' => 'faq_tag',
+                    'field' => 'slug',
+                    'terms' => $category,
+                ],
+            ];
+        }
+
+        $query = new WP_Query($args);
+        $items = [];
+
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                
+                $post_tags = get_the_terms(get_the_ID(), 'faq_tag');
+                $tag_slugs = [];
+                if ($post_tags && !is_wp_error($post_tags)) {
+                    foreach ($post_tags as $t) {
+                        $tag_slugs[] = $t->slug;
+                    }
+                }
+
+                $items[] = [
+                    'id' => get_the_ID(),
+                    'title' => get_the_title(),
+                    'content' => apply_filters('the_content', get_the_content()),
+                    'tags' => $tag_slugs,
+                ];
+            }
+        }
+        wp_reset_postdata();
+
+        $has_more = $page < $query->max_num_pages;
+
+        wp_send_json_success([
+            'items' => $items,
+            'has_more' => $has_more,
+            'max_pages' => $query->max_num_pages,
+            'total' => $query->found_posts,
+            'current_page' => $page,
+        ]);
     }
 
     /**
