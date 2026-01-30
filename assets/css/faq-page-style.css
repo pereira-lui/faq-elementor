@@ -27,10 +27,10 @@
 
 
 .faq-page-hero-content {
-    max-width: 1200px !important;
+    max-width: 1150px !important;
     width: 100% !important;
     margin: 0 auto !important;
-    padding: 0 20px !important;
+
     position: relative !important;
     z-index: 1 !important;
 }
@@ -118,7 +118,7 @@
 }
 
 .faq-page-content-wrapper {
-    max-width: 1200px !important;
+    max-width: 1150px !important;
     margin: 0 auto !important;
 }
 
@@ -143,7 +143,7 @@
 }
 
 .faq-page-categories-tabs.is-sticky .faq-page-category-slider {
-    max-width: 1200px !important;
+    max-width: 1150px !important;
     margin: 0 auto !important;
     padding: 0 20px !important;
     width: 100% !important;

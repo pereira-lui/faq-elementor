@@ -130,65 +130,6 @@ class FAQ_Elementor_Page_Widget extends \Elementor\Widget_Base {
             ]
         );
 
-        $this->add_responsive_control(
-            'hero_alignment',
-            [
-                'label' => __('Alinhamento do Texto', 'faq-elementor'),
-                'type' => \Elementor\Controls_Manager::CHOOSE,
-                'options' => [
-                    'left' => [
-                        'title' => __('Esquerda', 'faq-elementor'),
-                        'icon' => 'eicon-text-align-left',
-                    ],
-                    'center' => [
-                        'title' => __('Centro', 'faq-elementor'),
-                        'icon' => 'eicon-text-align-center',
-                    ],
-                    'right' => [
-                        'title' => __('Direita', 'faq-elementor'),
-                        'icon' => 'eicon-text-align-right',
-                    ],
-                ],
-                'default' => 'center',
-                'selectors' => [
-                    '{{WRAPPER}} .faq-page-hero' => 'text-align: {{VALUE}} !important;',
-                    '{{WRAPPER}} .faq-page-hero-content' => 'text-align: {{VALUE}} !important;',
-                    '{{WRAPPER}} .faq-page-hero-title' => 'text-align: {{VALUE}} !important;',
-                    '{{WRAPPER}} .faq-page-hero-subtitle' => 'text-align: {{VALUE}} !important;',
-                ],
-                'condition' => [
-                    'show_hero' => 'yes',
-                ],
-            ]
-        );
-
-        $this->add_responsive_control(
-            'search_alignment',
-            [
-                'label' => __('Alinhamento do Campo de Busca', 'faq-elementor'),
-                'type' => \Elementor\Controls_Manager::CHOOSE,
-                'options' => [
-                    'left' => [
-                        'title' => __('Esquerda', 'faq-elementor'),
-                        'icon' => 'eicon-h-align-left',
-                    ],
-                    'center' => [
-                        'title' => __('Centro', 'faq-elementor'),
-                        'icon' => 'eicon-h-align-center',
-                    ],
-                    'right' => [
-                        'title' => __('Direita', 'faq-elementor'),
-                        'icon' => 'eicon-h-align-right',
-                    ],
-                ],
-                'default' => 'center',
-                'prefix_class' => 'faq-search-align-',
-                'condition' => [
-                    'show_hero' => 'yes',
-                ],
-            ]
-        );
-
         $this->end_controls_section();
 
         // Search Section
@@ -233,35 +174,6 @@ class FAQ_Elementor_Page_Widget extends \Elementor\Widget_Base {
                 'options' => [
                     'hero' => __('Na Seção Hero', 'faq-elementor'),
                     'above_content' => __('Acima do Conteúdo', 'faq-elementor'),
-                ],
-                'condition' => [
-                    'show_search' => 'yes',
-                ],
-            ]
-        );
-
-        $this->add_responsive_control(
-            'search_width',
-            [
-                'label' => __('Largura do Campo', 'faq-elementor'),
-                'type' => \Elementor\Controls_Manager::SLIDER,
-                'size_units' => ['px', '%'],
-                'range' => [
-                    'px' => [
-                        'min' => 200,
-                        'max' => 1200,
-                    ],
-                    '%' => [
-                        'min' => 30,
-                        'max' => 100,
-                    ],
-                ],
-                'default' => [
-                    'unit' => '%',
-                    'size' => 100,
-                ],
-                'selectors' => [
-                    '{{WRAPPER}} .faq-page-search-wrapper' => 'max-width: {{SIZE}}{{UNIT}} !important; width: 100% !important;',
                 ],
                 'condition' => [
                     'show_search' => 'yes',

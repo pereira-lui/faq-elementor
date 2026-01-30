@@ -317,7 +317,11 @@
 
         // Load more button
         $loadMoreBtn.on('click', function() {
-            if (isLoading || currentPage >= maxPages) return;
+            if (isLoading) return;
+            if (currentPage >= maxPages) {
+                $loadMoreBtn.hide();
+                return;
+            }
             currentPage++;
             loadFAQs(false);
         });
@@ -432,10 +436,11 @@
                         
                         // Update load more button visibility
                         if ($loadMoreBtn.length) {
-                            if (hasMore && currentPage < maxPages) {
-                                $loadMoreBtn.show();
-                            } else {
+                            // Esconde se não há mais páginas OU se chegamos na última página
+                            if (!hasMore || currentPage >= maxPages) {
                                 $loadMoreBtn.hide();
+                            } else {
+                                $loadMoreBtn.show();
                             }
                         }
                     }
